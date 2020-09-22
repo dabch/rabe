@@ -12,7 +12,7 @@
 //!
 //! ```
 //!use rabe::schemes::lsw::*;
-//! use rabe::utils::policy::pest::PolicyLanguage;
+//!use rabe::utils::policy::pest::PolicyLanguage;
 //!let (pk, msk) = setup();
 //!let plaintext = String::from("our plaintext!").into_bytes();
 //!let policy = String::from(r#""X" or "B""#);
@@ -20,17 +20,15 @@
 //!let sk: KpAbeSecretKey = keygen(&pk, &msk, &policy, PolicyLanguage::HumanPolicy).unwrap();
 //!assert_eq!(decrypt(&sk, &ct_kp).unwrap(), plaintext);
 //! ```
-use rabe_bn::{Group, Fr, G1, G2, Gt, pairing};
-use std::ops::Neg;
+use rabe_bn::{Fr, G1, G2, Gt, pairing};
 use utils::{
     aes::*,
     hash::{blake2b_hash_fr, blake2b_hash_g1}
 };
 use rand::Rng;
-use RabeError;
 
 /// A LSW Public Key (PK)
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[derive(PartialEq, Clone)]
 pub struct KpAbePublicKey {
     _g_g1: G1,
     _g_g2: G2,
@@ -41,7 +39,7 @@ pub struct KpAbePublicKey {
 }
 
 /// A LSW Master Key (MSK)
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[derive(PartialEq, Clone)]
 pub struct KpAbeMasterKey {
     _alpha1: Fr,
     _alpha2: Fr,
@@ -51,7 +49,7 @@ pub struct KpAbeMasterKey {
 }
 
 /// A LSW Ciphertext (CT)
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[derive(PartialEq, Clone)]
 pub struct KpAbeCiphertext {
     _e1: Gt,
     _e2: G2,

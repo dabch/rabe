@@ -6,26 +6,23 @@
 //! * Date: 07/2020
 //!
 #![allow(dead_code)]
-#[macro_use]
-extern crate serde_derive;
 extern crate blake2_rfc;
 extern crate rabe_bn;
 extern crate crypto;
 extern crate libc;
 extern crate rand;
-extern crate serde;
-extern crate serde_json;
 
 /// implemented schemes
 pub mod schemes;
 /// various utilities
 pub mod utils;
+pub mod ffi;
 
 use std::{fmt::{
     Display,
     Result,
     Formatter
-}, error::Error, cmp};
+}, error::Error};
 use crypto::symmetriccipher::SymmetricCipherError;
 
 #[derive(Debug)]
