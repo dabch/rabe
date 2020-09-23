@@ -20,6 +20,15 @@ int main () {
 
   /* Encrypt */
   assert (0 == kpabe_encrypt (ctx, attributes, pt, pt_len, &ct_buf, &ct_len));
+  printf("attributes: {%s}\n", attributes);
+  printf("ciphertext: ");
+  char output[(ct_len * 2) + 1];
+  char *ptr = &output[0];
+  int i;
+  for (i = 0; i < ct_len; i++) {
+    ptr += sprintf(ptr, "%02X", ct_buf[i]);
+  }
+  printf("%s\n", output);
 
   /* Destroy Context */
   kpabe_destroy(ctx);

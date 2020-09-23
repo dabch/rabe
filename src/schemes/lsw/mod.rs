@@ -23,7 +23,7 @@
 use rabe_bn::{Fr, G1, G2, Gt, pairing};
 use utils::{
     aes::*,
-    hash::{blake2b_hash_fr, blake2b_hash_g1}
+    hash::{blake2b_hash, blake2b_hash_g1}
 };
 use rand::Rng;
 
@@ -116,7 +116,7 @@ pub fn encrypt(
                 _attr.to_string(),
                 blake2b_hash_g1(_pk._g_g1, &_attr) * _s,
                 _pk._g_g1_b * _sx[_i],
-                (_pk._g_g1_b2 * (_sx[_i] * blake2b_hash_fr(&_attr))) + (_pk._h_g1_b * _sx[_i]),
+                (_pk._g_g1_b2 * (_sx[_i] * blake2b_hash(&_attr))) + (_pk._h_g1_b * _sx[_i]),
             ));
         }
         // random message

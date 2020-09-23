@@ -6,7 +6,6 @@
 //! * Date: 07/2020
 //!
 #![allow(dead_code)]
-extern crate blake2_rfc;
 extern crate rabe_bn;
 extern crate crypto;
 extern crate libc;

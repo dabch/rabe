@@ -11,4 +11,3 @@
 pub mod aes;
 pub mod hash;
 pub mod tools;
-pub mod file;

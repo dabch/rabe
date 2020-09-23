@@ -21,11 +21,10 @@ codegen-units = 1
 
 [lib]
 name="rabe"
-crate-type=["rlib", "cdylib"]
+crate-type = ["staticlib", "cdylib"]
 bench = false
 
 [dependencies]
-blake2-rfc = "0.2.17"
 rabe-bn = { path = "../bn/" }
 libc = "0.2.0"
 rand = "0.7.3"
