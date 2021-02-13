@@ -9,6 +9,9 @@
 #![no_std] 
 // extern crate std;
 // use std::prelude::v1::*;
+#[cfg(test)]
+extern crate std;
+
 
 #[macro_use]
 // extern crate serde_derive;
