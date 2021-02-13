@@ -13,17 +13,39 @@ use ccm::aead::generic_array::GenericArray;
 use rand::{RngCore, Rng};
 use RabeError;
 
-use serde::{Serialize, Deserialize};
+use serde::{Serialize, Serializer, ser::SerializeSeq};
 
 
-#[derive(Serialize, Deserialize, PartialEq, Eq)]
-pub struct CiphertextMetadata {
+#[derive(PartialEq, Eq, Debug)]
+pub struct SymmetricCiphertext<'a> {
     nonce: [u8; 13],
     tag: [u8; 16],
+    data: &'a mut [u8],
+}
+
+impl<'a> Serialize for SymmetricCiphertext<'a> {
+    fn serialize<S>(&self, serializer: S)
+    -> Result<S::Ok, S::Error>
+    where S: Serializer
+    {   
+        let mut seq = serializer.serialize_seq(None)?;
+
+        // data is deserialized and interpreted as: first nonce, then ciphertext, then tag
+        for b in &self.nonce {
+            seq.serialize_element(b)?;
+        }
+        for b in self.data.iter() {
+            seq.serialize_element(b)?;
+        }
+        for b in &self.tag {
+            seq.serialize_element(b)?;
+        }
+        seq.end()
+    }
 }
 
 /// Key Encapsulation Mechanism (Encryption Function)
-pub fn encrypt_symmetric<'a, T: core::fmt::Display>(_msg: &T, _plaintext_buf: &'a mut [u8], rng: &mut dyn RngCore) -> Result<CiphertextMetadata, RabeError<'static>> {
+pub fn encrypt_symmetric<'a, T: core::fmt::Display>(_msg: &T, _plaintext_buf: &'a mut [u8], rng: &mut dyn RngCore) -> Result<SymmetricCiphertext<'a>, RabeError<'static>> {
     let key = kdf(_msg);
     let nonce: [u8; 13] = rng.gen();
 
@@ -33,17 +55,17 @@ pub fn encrypt_symmetric<'a, T: core::fmt::Display>(_msg: &T, _plaintext_buf: &'
         Ok(tag) => tag,
         Err(_) => return Err(RabeError::new("Symmetric Encryption with AES failed")),
     };
-    Ok(CiphertextMetadata{ nonce, tag: tag.into() })
+    Ok(SymmetricCiphertext{ nonce, tag: tag.into(), data: _plaintext_buf})
 }
 
 /// Key Encapsulation Mechanism (Decryption Function)
-pub fn decrypt_symmetric<'a, T: core::fmt::Display>(_msg: &T, _ct_buf: &'a mut [u8], _ct_meta: CiphertextMetadata) -> Result<&'a mut [u8], (&'a mut [u8], CiphertextMetadata)> {
+pub fn decrypt_symmetric<'a, T: core::fmt::Display>(_msg: &T, _ct: SymmetricCiphertext<'a>) -> Result<&'a mut [u8], SymmetricCiphertext<'a>> {
         let key = kdf(_msg);
 
     let ccm: ccm::Ccm<Aes256, ccm::consts::U16, ccm::consts::U13> = ccm::Ccm::new(&key);
-    match ccm.decrypt_in_place_detached(&GenericArray::from(_ct_meta.nonce), &[], _ct_buf, &GenericArray::from(_ct_meta.tag)) {
-        Ok(()) => Ok(_ct_buf),
-        Err(_) => return Err((_ct_buf, _ct_meta)), // decryption failed, return ownership of ciphertext to allow the user to try again if they want
+    match ccm.decrypt_in_place_detached(&GenericArray::from(_ct.nonce), &[], _ct.data, &GenericArray::from(_ct.tag)) {
+        Ok(()) => Ok(_ct.data),
+        Err(_) => return Err(_ct), // decryption failed, return ownership of ciphertext to allow the user to try again if they want
     }
 }
 

@@ -174,11 +174,10 @@ pub struct Yct14AbePublicKey<'name, 'atts> {
 // }
 
 /// A Ciphertext (CT)
-#[derive(Serialize, PartialEq)]
+#[derive(Serialize, PartialEq, Debug)]
 pub struct Yct14AbeCiphertext<'name, 'data> {
     attributes: Vec<Yct14Attribute<'name>, S>,
-    ct: &'data mut [u8],
-    metadata: CiphertextMetadata,
+    ct: SymmetricCiphertext<'data>,
 }
 
 impl<'name, 'data> Yct14AbeCiphertext<'name, 'data> {
@@ -195,6 +194,7 @@ impl<'name, 'data> Yct14AbeCiphertext<'name, 'data> {
         res.ok_or(RabeError::new("no private key found for attribute"))
     }
 }
+
 
 /// The setup algorithm of KP-ABE. Generates a new Yct14AbePublicKey and a new Yct14AbeMasterKey.
 // pub fn setup(attribute_keys: Vec<String>) -> (Yct14AbePublicKey, Yct14AbeMasterKey) {
@@ -293,7 +293,7 @@ pub fn encrypt<'attname, 'attlist, 'data>(
         }
         //Encrypt plaintext using aes secret
         match encrypt_symmetric(&_cs, _plaintext, _rng) {
-            Ok(metadata) => Ok(Yct14AbeCiphertext { attributes, ct: _plaintext, metadata }),
+            Ok(symm_ct) => Ok(Yct14AbeCiphertext { attributes, ct: symm_ct }),
             Err(e) => Err(e)
         }
     }
@@ -347,8 +347,10 @@ mod tests {
     use super::*;
 
     extern crate std;
+    extern crate serde_json;
 
     use std::prelude::v1::*;
+    use std::println;
 
     // #[test]
     // fn or() {
@@ -422,6 +424,7 @@ mod tests {
         // //println!("sk: {:?}", serde_json::to_string(&sk).unwrap());
         // // and now decrypt again with matching sk
         // assert_eq!(decrypt(&sk, &ct).unwrap(), plaintext);
+        println!("{}", serde_json::to_string(&ct).unwrap());
     }
 
 }
