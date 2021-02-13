@@ -7,18 +7,6 @@
 //! * Authors: Georg Bramm
 //! * Date:	01/2021
 //!
-//! # Examples
-//!
-//! ```
-//! use rabe::schemes::yct14::*;
-//! use rabe::utils::policy::pest::PolicyLanguage;
-//! let (pk, msk) = setup(vec!["A".to_string(), "B".to_string(), "C".to_string()]);
-//!let plaintext = String::from("our plaintext!").into_bytes();
-//!let policy = String::from(r#""A" or "B""#);
-//!let ct_kp: Yct14AbeCiphertext = encrypt(&pk, &vec!["A".to_string(), "B".to_string()], &plaintext).unwrap();
-//!let sk: Yct14AbeSecretKey = keygen(&pk, &msk, &policy, PolicyLanguage::HumanPolicy).unwrap();
-//!assert_eq!(decrypt(&sk, &ct_kp).unwrap(), plaintext);
-//! ```
 use rabe_bn::{Fr, Gt};
 use utils::{
     // secretsharing::{gen_shares_policy, calc_coefficients, calc_pruned},
