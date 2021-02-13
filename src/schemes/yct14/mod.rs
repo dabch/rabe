@@ -21,22 +21,29 @@
 //! ```
 use rabe_bn::{Fr, Gt};
 use utils::{
-    secretsharing::{gen_shares_policy, calc_coefficients, calc_pruned},
+    // secretsharing::{gen_shares_policy, calc_coefficients, calc_pruned},
     aes::*
 };
 use rand::Rng;
-use utils::policy::pest::{PolicyLanguage, parse};
+// use utils::po licy::pest::{PolicyLanguage, parse};
 use RabeError;
-use std::ops::Mul;
+// use std::ops::Mul;
+use heapless::{Vec, consts};
 
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+use rand::RngCore;
+
+use serde::{Serialize, Deserialize};
+
+type S = consts::U64;
+
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Yct14Attribute<'a> {
     name: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
     node: Option<Yct14Type>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum Yct14Type {
     Public(Gt),
     Private(Fr),
@@ -58,9 +65,9 @@ impl Yct14Type {
 }
 
 impl<'a> Yct14Attribute<'a> {
-    pub fn new(name: &'a str, g: Gt) -> (Yct14Attribute<'a>, Yct14Attribute<'a>) {
+    pub fn new(name: &'a str, g: Gt, rng: &mut dyn RngCore) -> (Yct14Attribute<'a>, Yct14Attribute<'a>) {
         // random fr
-        let si: Fr = rand::thread_rng().gen();
+        let si: Fr = rng.gen();
         (
             // public attribute part
             Yct14Attribute {
@@ -103,10 +110,10 @@ impl<'a> Yct14Attribute<'a> {
                             Yct14Type::Public(public) => {
                                 Some(Yct14Type::Public(public.pow(k)))
                             },
-                            _ => panic!("attribute {} has no public node value", attribute.name),
+                            _ => panic!("attribute has no public node value"),
                         }
                     },
-                    None => panic!("attribute {} has no public node", attribute.name),
+                    None => panic!("attribute has no public node"),
                 })
                 .nth(0)
                 .unwrap()
@@ -167,25 +174,25 @@ pub struct Yct14AbePublicKey<'name, 'atts> {
 // }
 
 /// A Ciphertext (CT)
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
-pub struct Yct14AbeCiphertext<'name> {
-    #[serde(borrow)]
-    attributes: Vec<Yct14Attribute<'name>>,
-    ct: Vec<u8>,
+#[derive(Serialize, PartialEq)]
+pub struct Yct14AbeCiphertext<'name, 'data> {
+    attributes: Vec<Yct14Attribute<'name>, S>,
+    ct: &'data mut [u8],
+    metadata: CiphertextMetadata,
 }
 
-impl<'name> Yct14AbeCiphertext<'name> {
-    pub fn get_public(&self, attribute: &String) -> Result<Gt, RabeError> {
+impl<'name, 'data> Yct14AbeCiphertext<'name, 'data> {
+    pub fn get_public(&self, attribute: &'data str) -> Result<Gt, RabeError> {
         let res: Option<Gt> = self.attributes
             .clone()
             .into_iter()
             .filter(|a| a.name == attribute)
             .map(|a| match a.node.unwrap().public() {
                 Ok(node_value) => node_value,
-                Err(e) => panic!("no public node value: {}",e)
+                Err(_) => panic!("no public node value")
             } )
             .nth(0);
-        res.ok_or(RabeError::new(&format!("no private key found for {}", attribute)))
+        res.ok_or(RabeError::new("no private key found for attribute"))
     }
 }
 
@@ -261,11 +268,12 @@ impl<'name> Yct14AbeCiphertext<'name> {
 ///	* `_attributes` - A set of attributes given as String Vector
 ///	* `_plaintext` - plaintext data given as a vec<u8>
 ///
-pub fn encrypt<'attname, 'attlist>(
+pub fn encrypt<'attname, 'attlist, 'data>(
     pk: &Yct14AbePublicKey,
     _attributes: &'attlist [&'attname str],
-    _plaintext: &[u8],
-) -> Result<Yct14AbeCiphertext<'attname>, RabeError> {
+    _plaintext: &'data mut [u8],
+    _rng: &mut dyn RngCore,
+) -> Result<Yct14AbeCiphertext<'attname, 'data>, RabeError<'static>> {
     if _attributes.is_empty() {
         return Err(RabeError::new("attributes empty"));
     } 
@@ -274,18 +282,18 @@ pub fn encrypt<'attname, 'attlist>(
     }
     else {
         // attribute vector
-        let mut attributes: Vec<Yct14Attribute> = Vec::new();
+        let mut attributes: Vec<Yct14Attribute, S> = Vec::new();
         // random secret
-        let k: Fr = rand::thread_rng().gen();
+        let k: Fr = _rng.gen();
         // aes secret = public g ** random k
         let _cs: Gt = pk.g.pow(k);
 
         for attr in _attributes.into_iter() {
-            attributes.push(Yct14Attribute::public_from(attr, pk, k));
+            attributes.push(Yct14Attribute::public_from(attr, pk, k)).expect("too many attributes for limited-capacity vector");
         }
         //Encrypt plaintext using aes secret
-        match encrypt_symmetric(&_cs, &_plaintext.to_vec()) {
-            Ok(ct) => Ok(Yct14AbeCiphertext { attributes, ct }),
+        match encrypt_symmetric(&_cs, _plaintext, _rng) {
+            Ok(metadata) => Ok(Yct14AbeCiphertext { attributes, ct: _plaintext, metadata }),
             Err(e) => Err(e)
         }
     }
