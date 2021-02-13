@@ -174,6 +174,11 @@ pub struct Yct14AbeCiphertext<'name, 'data> {
     ct: SymmetricCiphertext<'data>,
 }
 
+pub struct Yct14AbeKeyEncapsulation<'name> {
+    attributes: Vec<Yct14Attribute<'name>, S>,
+    secret: Gt,
+}
+
 impl<'name, 'data> Yct14AbeCiphertext<'name, 'data> {
     pub fn get_public(&self, attribute: &'data str) -> Result<Gt, RabeError> {
         let res: Option<Gt> = self.attributes
@@ -263,7 +268,7 @@ impl<'name, 'data> Yct14AbeCiphertext<'name, 'data> {
 ///	* `_plaintext` - plaintext data given as a vec<u8>
 ///
 pub fn encrypt<'attname, 'attlist, 'data>(
-    pk: &Yct14AbePublicKey,
+    _pk: &Yct14AbePublicKey,
     _attributes: &'attlist [&'attname str],
     _plaintext: &'data mut [u8],
     _rng: &mut dyn RngCore,
@@ -275,22 +280,58 @@ pub fn encrypt<'attname, 'attlist, 'data>(
         return Err(RabeError::new("plaintext empty"));
     }
     else {
-        // attribute vector
-        let mut attributes: Vec<Yct14Attribute, S> = Vec::new();
-        // random secret
-        let k: Fr = _rng.gen();
-        // aes secret = public g ** random k
-        let _cs: Gt = pk.g.pow(k);
-
-        for attr in _attributes.into_iter() {
-            attributes.push(Yct14Attribute::public_from(attr, pk, k)).expect("too many attributes for limited-capacity vector");
-        }
+        // create encapsulated aes key
+        let Yct14AbeKeyEncapsulation { attributes, secret } = create_symmetric_key(_pk, _attributes, _rng)?;
+        
         //Encrypt plaintext using aes secret
-        match encrypt_symmetric(&_cs, _plaintext, _rng) {
-            Ok(symm_ct) => Ok(Yct14AbeCiphertext { attributes, ct: symm_ct }),
+        match encrypt_symmetric(&secret, _plaintext, _rng) {
+            Ok(symm_ct) => Ok(Yct14AbeCiphertext { attributes: attributes, ct: symm_ct }),
             Err(e) => Err(e)
         }
     }
+}
+
+/// Encrypts a plaintext using a given curve point without doing 'full' ABE.
+/// Use this function if you want to reuse the curve point obtained by a prior run of the YCT14 scheme.
+/// To generate a symmetric key used by this function, use [create_symmetric_key].
+pub fn encrypt_using_symmetric_key<'attname, 'data>(
+    _key: &Yct14AbeKeyEncapsulation<'attname>,
+    _plaintext: &'data mut [u8],
+    _rng: &mut dyn RngCore,
+) -> Result<Yct14AbeCiphertext<'attname, 'data>, RabeError<'static>> {
+    let Yct14AbeKeyEncapsulation { attributes, secret } = _key;
+
+    match encrypt_symmetric(&secret, _plaintext, _rng) {
+        Ok(symm_ct) => Ok(Yct14AbeCiphertext { attributes: attributes.clone(), ct: symm_ct }),
+        Err(e) => Err(e)
+    }
+}
+
+/// Encrypts a set of attributes into a curve point according to the YCT14 scheme. This does not encrypt any actual payload
+/// but instead can be used to encrypt data (multiple times) using [encrypt_using_symmetric_key].
+pub fn create_symmetric_key<'attname, 'attlist>(
+    _pk: &Yct14AbePublicKey,
+    _attributes: &'attlist [&'attname str],
+    _rng: &mut dyn RngCore,
+) -> Result<Yct14AbeKeyEncapsulation<'attname>, RabeError<'static>> {
+    if _attributes.is_empty() {
+        return Err(RabeError::new("attributes empty"));
+    }
+    // attribute vector
+    let mut attributes: Vec<Yct14Attribute, S> = Vec::new();
+    // random secret
+    let k: Fr = _rng.gen();
+    // aes secret = public g ** random k
+    let _cs: Gt = _pk.g.pow(k);
+
+    for attr in _attributes.into_iter() {
+        match attributes.push(Yct14Attribute::public_from(attr, _pk, k)) {
+            Ok(_) => (),
+            Err(_) => return Err(RabeError::new("too many attributes for limited-capacity vector")),
+        }
+    }
+    // Encrypt plaintext using aes secret
+    Ok(Yct14AbeKeyEncapsulation{ attributes, secret: _cs})
 }
 
 /// # Arguments
