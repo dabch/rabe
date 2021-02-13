@@ -117,6 +117,12 @@ pub struct Yct14AbePublicKey<'name, 'atts> {
     attributes: &'atts [Yct14Attribute<'name>]
 }
 
+impl<'atts, 'name> Yct14AbePublicKey<'atts, 'name> {
+    pub fn from_curve_elements(g: Gt, attributes: &'atts [Yct14Attribute<'name>]) -> Self {
+        Yct14AbePublicKey { g, attributes }
+    }
+}
+
 /// A Master Key (MSK)
 // #[derive(Serialize, Deserialize, PartialEq, Clone)]
 // pub struct Yct14AbeMasterKey {
