@@ -9,7 +9,7 @@
 #![no_std] 
 // extern crate std;
 // use std::prelude::v1::*;
-#[cfg(test)]
+// #[cfg(test)]
 extern crate std;
 
 
@@ -28,6 +28,7 @@ extern crate ccm;
 extern crate aes;
 extern crate sha3;
 extern crate heapless;
+extern crate serde_cbor;
 // #[macro_use]
 // extern crate pest_derive;
 
@@ -35,6 +36,8 @@ extern crate heapless;
 pub mod schemes;
 /// various utilities
 pub mod utils;
+
+pub mod ffi;
 
 // use std::{fmt::{
 //     Display,

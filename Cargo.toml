@@ -16,19 +16,21 @@ documentation = "https://docs.rs/rabe"
 
 [lib]
 name="rabe"
-#crate-type=["staticlib"] # still need a panic handler...
+crate-type=["cdylib"] # still need a panic handler...
 bench = false
 path = "src/lib.rs"
 
 [dependencies]
 rabe-bn = { path = "../rabe-bn-own", default-features = false }
-rand = { version = "0.7.3", default-features = false }
+rand = { version = "0.7.3", default-features = true }
 serde = { version = "1.0.118", default-features = false, features = [ "derive" ] }
+serde_cbor = { version = "0.11.1", default-features = false }
 
 heapless = { version = "0.6.0", features = [ "serde" ] }
 aes = "0.6.0"
 ccm = { version = "0.3.0", default-features = false } # TODO maybe include heapless feature??
 sha3 = { version = "0.9.1", default-features = false }
+
 
 #[dev-dependencies]
 #serde_json = "1.0.60"

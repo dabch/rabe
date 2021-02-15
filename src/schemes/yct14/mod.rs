@@ -25,6 +25,7 @@ use serde::{Serialize, Deserialize};
 type S = consts::U64;
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+#[repr(C)]
 pub struct Yct14Attribute<'a> {
     name: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -110,7 +111,7 @@ impl<'a> Yct14Attribute<'a> {
 }
 
 /// A Public Key (PK)
-#[derive(Serialize, PartialEq, Clone)]
+#[derive(Serialize, PartialEq, Clone, Debug)]
 pub struct Yct14AbePublicKey<'name, 'atts> {
     g: Gt,
     #[serde(borrow)]
