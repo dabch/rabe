@@ -16,15 +16,17 @@ documentation = "https://docs.rs/rabe"
 
 [lib]
 name="rabe"
-crate-type=["cdylib"] # still need a panic handler...
+crate-type=["staticlib"] # still need a panic handler...
 bench = false
 path = "src/lib.rs"
 
 [dependencies]
 rabe-bn = { path = "../rabe-bn-own", default-features = false }
-rand = { version = "0.7.3", default-features = true }
+rand = { version = "0.7.3", default-features = false }
 serde = { version = "1.0.118", default-features = false, features = [ "derive" ] }
-serde_cbor = { version = "0.11.1", default-features = true }
+serde_cbor = { version = "0.11.1", default-features = false }
+
+nrf52832-hal = "0.10.0"
 
 heapless = { version = "0.6.0", features = [ "serde" ] }
 aes = "0.6.0"

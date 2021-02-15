@@ -1,10 +1,11 @@
 use schemes::yct14::*;
-use serde::{Serialize, Deserialize};
+use serde::{Serialize};
 use serde_cbor::{self, Serializer, ser::SliceWrite};
-
 use core::slice;
 use heapless::{Vec, consts};
-use rand;
+
+use core::panic::PanicInfo;
+use nrf52832_hal as hal;
 
 /// @file
 /// @author Daniel Buecheler <daniel.buecheler@tum.de>
@@ -51,7 +52,6 @@ pub extern "C" fn rabe_yct14_init<'attname, 'attlist>(place_atts_here: *mut [Yct
     unsafe { *place_atts_here = [a, b, c] };
     let atts: &[Yct14Attribute<'attname>] = unsafe { slice::from_raw_parts(&mut (*place_atts_here)[0] as *mut _, 3) };
     let pubkey = Yct14AbePublicKey::from_curve_elements(g, atts);
-    std::println!("{:?}", &pubkey);
     unsafe { *place_pubkey_here = pubkey; };
 
     0
@@ -81,7 +81,11 @@ pub extern "C" fn rabe_yct14_encrypt_and_serialize<'a, 'b>(
     atts_buf: *mut u8, // watch out, rust chars are 4 byte!! Separated by spaces.
     atts_len: usize,
 ) -> usize {
-    let mut rng = rand::thread_rng();
+    let p = match hal::pac::Peripherals::take() {
+        Some(p) => p,
+        None => return 0,
+    };
+    let mut rng = hal::Rng::new(p.RNG);
 
     // preparation: do all the unsafe stuff
     let params = unsafe { &*params };
@@ -109,7 +113,6 @@ pub extern "C" fn rabe_yct14_encrypt_and_serialize<'a, 'b>(
     let writer = serializer.into_inner();
 
     let size = writer.bytes_written();
-    //std::println!("{:?}", &cipher_buf[..size]);
     size
 }
 
@@ -129,21 +132,23 @@ pub extern "C" fn rabe_yct14_partial_encrypt_init<'a, 'b>(
     atts_len: usize,
     put_key_encapsulation_here: *mut Yct14AbeKeyEncapsulation<'a>
 ) -> i32 {
-    let mut rng = rand::thread_rng();
+    let p = match hal::pac::Peripherals::take() {
+        Some(p) => p,
+        None => return 0,
+    };
+    let mut rng = hal::Rng::new(p.RNG);
+
     let params = unsafe { &*params };
     let atts_u8: &mut [u8] = unsafe { slice::from_raw_parts_mut(atts_buf, atts_len) };
     let atts: &mut str = unsafe { core::str::from_utf8_unchecked_mut(atts_u8) };
 
     let atts_array: Vec<&str, S> = atts.split(' ').collect();
 
-    std::println!("atts: {:?}", atts_array);
-
     let kem = match create_symmetric_key(params, &atts_array, &mut rng) {
         Ok(kem) => kem,
         Err(_) => return 1,
     };
     unsafe { *put_key_encapsulation_here = kem; };
-    std::println!("{:?}", unsafe {&*put_key_encapsulation_here});
     0
 }
 
@@ -163,7 +168,11 @@ pub extern "C" fn rabe_yct14_partial_encrypt_payload_and_serialize<'a>(
     ct_buf: *mut u8,
     ct_len: usize,
 ) -> usize {
-    let mut rng = rand::thread_rng();
+    let p = match hal::pac::Peripherals::take() {
+        Some(p) => p,
+        None => return 0,
+    };
+    let mut rng = hal::Rng::new(p.RNG);
 
     // create safe slices from unsafe pointers
     let plain_buf = unsafe { slice::from_raw_parts_mut (plain_buf, plain_len) };
@@ -190,6 +199,12 @@ pub extern "C" fn rabe_yct14_partial_encrypt_payload_and_serialize<'a>(
     let size = writer.bytes_written();
     size
 }
+
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    loop {}
+}
+
 
 #[cfg(test)]
 mod test {

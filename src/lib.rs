@@ -9,9 +9,10 @@
 #![no_std] 
 // extern crate std;
 // use std::prelude::v1::*;
-// #[cfg(test)]
+#[cfg(test)]
 extern crate std;
 
+extern crate nrf52832_hal;
 
 #[macro_use]
 // extern crate serde_derive;
