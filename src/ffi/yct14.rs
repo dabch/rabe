@@ -15,6 +15,8 @@ const B_SER: &[u8] = &[162, 100, 110, 97, 109, 101, 97, 66, 100, 110, 111, 100, 
 const C_SER: &[u8]= &[162, 100, 110, 97, 109, 101, 97, 67, 100, 110, 111, 100, 101, 161, 102, 80, 117, 98, 108, 105, 99, 162, 98, 99, 48, 163, 98, 99, 48, 162, 98, 99, 48, 132, 27, 139, 99, 162, 69, 75, 238, 217, 88, 27, 38, 8, 246, 124, 61, 239, 100, 211, 27, 75, 14, 204, 225, 232, 64, 106, 221, 27, 10, 127, 169, 34, 200, 201, 7, 163, 98, 99, 49, 132, 27, 82, 85, 90, 115, 14, 38, 24, 42, 27, 216, 221, 79, 42, 155, 7, 37, 120, 27, 157, 112, 119, 41, 189, 86, 10, 53, 27, 23, 18, 206, 34, 18, 1, 28, 236, 98, 99, 49, 162, 98, 99, 48, 132, 27, 23, 149, 14, 113, 91, 86, 39, 59, 27, 180, 50, 38, 98, 233, 51, 20, 151, 27, 238, 176, 210, 229, 148, 209, 116, 139, 27, 38, 74, 163, 116, 102, 35, 121, 142, 98, 99, 49, 132, 27, 183, 162, 94, 132, 39, 195, 103, 21, 27, 213, 100, 117, 107, 246, 165, 195, 188, 27, 149, 13, 124, 122, 247, 208, 119, 173, 27, 27, 224, 94, 155, 150, 141, 17, 157, 98, 99, 50, 162, 98, 99, 48, 132, 27, 82, 184, 229, 83, 62, 161, 176, 145, 27, 228, 6, 212, 136, 16, 70, 235, 77, 27, 166, 120, 136, 80, 85, 137, 22, 159, 27, 33, 99, 140, 227, 202, 155, 86, 63, 98, 99, 49, 132, 27, 9, 91, 28, 243, 65, 109, 33, 8, 27, 178, 164, 131, 246, 179, 48, 151, 40, 27, 247, 240, 49, 166, 38, 82, 54, 166, 27, 13, 120, 120, 135, 40, 229, 229, 161, 98, 99, 49, 163, 98, 99, 48, 162, 98, 99, 48, 132, 27, 248, 91, 100, 201, 198, 35, 76, 161, 27, 118, 253, 73, 238, 111, 43, 7, 11, 27, 132, 73, 132, 183, 21, 153, 192, 145, 27, 27, 85, 97, 87, 0, 145, 189, 54, 98, 99, 49, 132, 27, 111, 38, 228, 70, 57, 189, 195, 195, 27, 45, 79, 237, 232, 112, 95, 3, 166, 27, 48, 3, 179, 97, 9, 149, 217, 211, 27, 9, 45, 35, 171, 43, 151, 25, 118, 98, 99, 49, 162, 98, 99, 48, 132, 27, 231, 121, 166, 94, 28, 113, 179, 211, 27, 151, 32, 95, 138, 114, 122, 62, 59, 27, 186, 213, 9, 211, 19, 76, 241, 9, 27, 46, 59, 234, 185, 70, 242, 71, 135, 98, 99, 49, 132, 27, 27, 118, 254, 73, 75, 68, 211, 243, 27, 39, 200, 210, 89, 107, 116, 122, 187, 27, 110, 39, 70, 124, 16, 3, 115, 81, 27, 30, 87, 92, 198, 98, 211, 124, 217, 98, 99, 50, 162, 98, 99, 48, 132, 27, 17, 92, 88, 79, 92, 2, 86, 247, 27, 227, 29, 43, 218, 247, 58, 148, 39, 27, 234, 198, 25, 28, 231, 229, 168, 121, 27, 13, 12, 14, 177, 179, 253, 218, 141, 98, 99, 49, 132, 27, 212, 121, 243, 205, 247, 114, 121, 35, 27, 0, 128, 117, 7, 228, 228, 153, 240, 27, 200, 40, 210, 134, 14, 26, 135, 126, 27, 4, 152, 74, 99, 106, 222, 6, 100];
 
 
+type S = consts::U8;
+
 pub use schemes::yct14::Yct14AbePublicKey;
 
 #[repr(C)]
@@ -38,7 +40,8 @@ pub extern "C" fn rabe_yct14_init<'attname, 'attlist>(place_atts_here: *mut [Yct
     // let att_ref: &[Yct14Attribute] = unsafe { slice::from_raw_parts(place_atts_here as *mut Yct14Attribute, 3) };
     let pubkey = Yct14AbePublicKey::from_curve_elements(g, atts);
     std::println!("{:?}", &pubkey);
-    unsafe { core::ptr::write(place_pubkey_here, pubkey); };
+    // unsafe { core::ptr::write(place_pubkey_here, pubkey); };
+    unsafe { *place_pubkey_here = pubkey; };
 
     0
 }
@@ -48,8 +51,8 @@ pub extern "C" fn rabe_yct14_init<'attname, 'attlist>(place_atts_here: *mut [Yct
 NOTE: This function mutates the data in the plaintext!
 */
 #[no_mangle]
-pub extern "C" fn rabe_yct14_encrypt_and_serialize3<'a, 'b>(
-    context: *const Yct14AbePublicKey<'a, 'b>,
+pub extern "C" fn rabe_yct14_encrypt_and_serialize<'a, 'b>(
+    params: *const Yct14AbePublicKey<'a, 'b>,
     plain_buf: *mut u8,
     plain_len: usize,
     ct_buf: *mut u8,
@@ -60,15 +63,15 @@ pub extern "C" fn rabe_yct14_encrypt_and_serialize3<'a, 'b>(
     let mut rng = rand::thread_rng();
 
     // preparation: do all the unsafe stuff
-    let context = unsafe { &*context };
+    let params = unsafe { &*params };
     let plain_buf = unsafe { slice::from_raw_parts_mut (plain_buf, plain_len) };
     let cipher_buf = unsafe { slice::from_raw_parts_mut(ct_buf, ct_len) };
     let atts_u8: &mut [u8] = unsafe { slice::from_raw_parts_mut(atts_buf, atts_len) };
     let atts: &mut str = unsafe { core::str::from_utf8_unchecked_mut(atts_u8) };
-    let atts_array: Vec<&str, consts::U8> = atts.split(' ').collect();
+    let atts_array: Vec<&str, S> = atts.split(' ').collect();
 
     // encrypt - this changes the plaintext in-place
-    let ct = match encrypt(&context, &atts_array, plain_buf, &mut rng) {
+    let ct = match encrypt(&params, &atts_array, plain_buf, &mut rng) {
         Ok(ct) => ct,
         Err(_) => return 0,
     };
@@ -85,6 +88,85 @@ pub extern "C" fn rabe_yct14_encrypt_and_serialize3<'a, 'b>(
     let writer = serializer.into_inner();
 
     let size = writer.bytes_written();
-    std::println!("{:?}", &cipher_buf[..size]);
+    //std::println!("{:?}", &cipher_buf[..size]);
     size
+}
+
+#[no_mangle]
+pub extern "C" fn rabe_yct14_partial_encrypt_create_aes_key<'a, 'b>(
+    params: *const Yct14AbePublicKey<'a, 'b>,
+    atts_buf: *mut u8, // watch out, rust chars are 4 byte!! Separated by spaces.
+    atts_len: usize,
+    put_key_encapsulation_here: *mut Yct14AbeKeyEncapsulation<'a>
+) -> i32 {
+    let mut rng = rand::thread_rng();
+    let params = unsafe { &*params };
+    let atts_u8: &mut [u8] = unsafe { slice::from_raw_parts_mut(atts_buf, atts_len) };
+    let atts: &mut str = unsafe { core::str::from_utf8_unchecked_mut(atts_u8) };
+
+    let atts_array: Vec<&str, S> = atts.split(' ').collect();
+
+    std::println!("atts: {:?}", atts_array);
+
+    let kem = match create_symmetric_key(params, &atts_array, &mut rng) {
+        Ok(kem) => kem,
+        Err(_) => return 1,
+    };
+    unsafe { *put_key_encapsulation_here = kem; };
+    std::println!("{:?}", unsafe {&*put_key_encapsulation_here});
+    0
+}
+
+#[no_mangle]
+pub extern "C" fn rabe_yct14_partial_encrypt_create_ciphertext<'a>(
+    encapsulated_aes_key: *const Yct14AbeKeyEncapsulation<'a>,
+    plain_buf: *mut u8,
+    plain_len: usize,
+    ct_buf: *mut u8,
+    ct_len: usize,
+) -> usize {
+    let mut rng = rand::thread_rng();
+
+    // create safe slices from unsafe pointers
+    let plain_buf = unsafe { slice::from_raw_parts_mut (plain_buf, plain_len) };
+    let cipher_buf = unsafe { slice::from_raw_parts_mut(ct_buf, ct_len) };
+    let key = unsafe { &*encapsulated_aes_key };
+
+    // encrypt - this changes the plaintext in-place
+    let ct = match encrypt_using_symmetric_key(key, plain_buf, &mut rng) {
+        Ok(ct) => ct,
+        Err(_) => return 0,
+    };
+
+    // serialize the encrypted ciphertext into the ciphertext buffer
+    let writer = SliceWrite::new(cipher_buf);
+    let mut serializer = Serializer::new(writer);
+
+    match ct.serialize(&mut serializer) {
+        Ok(_) => (),
+        Err(_) => return 0,
+    };
+
+    let writer = serializer.into_inner();
+
+    let size = writer.bytes_written();
+    size
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::prelude::v1::*;
+
+    use std::println;
+
+    use rabe_bn;
+    #[test]
+    fn print_sizeof() {
+        println!("sizeof(Yct14AbeKeyEncapsulation) = {}", core::mem::size_of::<Yct14AbeKeyEncapsulation>());
+        println!("sizeof(Yct14AbePublicKey) = {}", core::mem::size_of::<Yct14AbePublicKey>());
+        println!("sizeof(Yct14AbeAttribute) = {}", core::mem::size_of::<Yct14Attribute>());
+        println!("sizeof(Yct14AbeCiphertext) = {}", core::mem::size_of::<Yct14AbeCiphertext>());
+        println!("sizeof(Gt) = {}", core::mem::size_of::<rabe_bn::Gt>());
+    }
 }

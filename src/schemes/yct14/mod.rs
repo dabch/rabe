@@ -22,7 +22,7 @@ use rand::RngCore;
 
 use serde::{Serialize, Deserialize};
 
-type S = consts::U64;
+type S = consts::U8;
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 #[repr(C)]
@@ -175,6 +175,7 @@ pub struct Yct14AbeCiphertext<'name, 'data> {
     ct: SymmetricCiphertext<'data>,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Yct14AbeKeyEncapsulation<'name> {
     attributes: Vec<Yct14Attribute<'name>, S>,
     secret: Gt,
@@ -383,7 +384,7 @@ mod tests {
     use super::*;
 
     extern crate std;
-    extern crate serde_json;
+    // extern crate serde_json;
 
     use std::prelude::v1::*;
     use std::println;
@@ -460,7 +461,7 @@ mod tests {
         // //println!("sk: {:?}", serde_json::to_string(&sk).unwrap());
         // // and now decrypt again with matching sk
         // assert_eq!(decrypt(&sk, &ct).unwrap(), plaintext);
-        println!("{}", serde_json::to_string(&ct).unwrap());
+        // println!("{}", serde_json::to_string(&ct).unwrap());
     }
 
 }

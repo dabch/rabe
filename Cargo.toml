@@ -24,7 +24,7 @@ path = "src/lib.rs"
 rabe-bn = { path = "../rabe-bn-own", default-features = false }
 rand = { version = "0.7.3", default-features = true }
 serde = { version = "1.0.118", default-features = false, features = [ "derive" ] }
-serde_cbor = { version = "0.11.1", default-features = false }
+serde_cbor = { version = "0.11.1", default-features = true }
 
 heapless = { version = "0.6.0", features = [ "serde" ] }
 aes = "0.6.0"
